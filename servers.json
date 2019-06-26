@@ -1,0 +1,19 @@
+{
+    "server": [
+        {
+        "name": "qa1",
+        "start": "C:\\servers\\scripts\\start qa1.bat",
+        "update": "C:\\servers\\scripts\\update qa1.bat"
+        },
+        {
+        "name": "qa2",
+        "start": "C:\\servers\\scripts\\start qa2.bat",
+        "update": "C:\\servers\\scripts\\update qa2.bat"
+        },
+        {
+        "name": "qa3",
+        "start": "C:\\servers\\scripts\\start qa3.bat",
+        "update": "C:\\servers\\scripts\\update qa3.bat"
+        }
+    ]
+}
