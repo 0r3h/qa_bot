@@ -49,7 +49,7 @@ func main() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.ConnectedEvent:
-			fmt.Printf("Info: SLACK BOT CONNECTED\n")
+			log.Printf("[INFO] Slack bot connected\n")
 			botID = fmt.Sprintf("<@%s>", ev.Info.User.ID)
 
 		case *slack.MessageEvent:
@@ -57,14 +57,14 @@ func main() {
 
 			if forMe {
 				parseCommand(rtm, message, ev)
-				fmt.Printf("Info: Received message %s\n", message)
+				log.Printf("[INFO] Received message: %s\n", message)
 			}
 
 		case *slack.RTMError:
-			fmt.Printf("Error: %s\n", ev.Error())
+			log.Printf("[ERROR] %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			fmt.Printf("Error: Invalid credentials\n")
+			log.Printf("[ERROR] Invalid credentials\n")
 			return
 
 		default:
@@ -86,6 +86,8 @@ func parseCommand(rtm *slack.RTM, message string, ev *slack.MessageEvent) {
 	default:
 		msg := "? (status|start|stop|update)"
 		rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+		log.Printf("[DEBUG] Unknown command: %s\n", args[0])
+		log.Printf("[DEBUG] Response: %s\n", msg)
 	}
 }
 
@@ -110,9 +112,11 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 			if status == -1 {
 				msg := fmt.Sprintf("%s is stopped @%s", server.Name, version)
 				rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+				log.Printf("[DEBUG] Response: %s\n", msg)
 			} else {
 				msg := fmt.Sprintf("%s is running @%s", server.Name, version)
 				rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+				log.Printf("[DEBUG] Response: %s\n", msg)
 			}
 		}
 	} else {
@@ -129,9 +133,11 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if status == -1 {
 					msg := fmt.Sprintf("%s is stopped @%s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				} else {
 					msg := fmt.Sprintf("%s is running @%s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				}
 			}
 		}
@@ -153,6 +159,7 @@ func commandStart(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if _, err := os.Stat(exe); os.IsNotExist(err) {
 					msg := fmt.Sprintf("%s is not installed", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 					break
 				}
 				version, err := getFileVersion(exe)
@@ -165,10 +172,12 @@ func commandStart(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if status != -1 {
 					msg := fmt.Sprintf("%s is already running @%s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				} else {
 					go runScript(server.Start)
 					msg := fmt.Sprintf("%s started @%s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				}
 				break
 			}
@@ -176,6 +185,7 @@ func commandStart(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	} else {
 		msg := fmt.Sprintf("? (start <server name>) (start qa1)")
 		rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+		log.Printf("[DEBUG] Wrong arguments: %s\n", args)
 	}
 }
 
@@ -194,6 +204,7 @@ func commandStop(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if _, err := os.Stat(exe); os.IsNotExist(err) {
 					msg := fmt.Sprintf("%s is not installed", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 					break
 				}
 				status := getRunningProcessID(exe)
@@ -201,10 +212,12 @@ func commandStop(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if status == -1 {
 					msg := fmt.Sprintf("%s is not running", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				} else {
 					stopProcess(getRunningProcessID(exe))
 					msg := fmt.Sprintf("%s stopped", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				}
 				break
 			}
@@ -212,6 +225,7 @@ func commandStop(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	} else {
 		msg := fmt.Sprintf("? (stop <server name>) (stop qa1)")
 		rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+		log.Printf("[DEBUG] Wrong arguments: %s\n", args)
 	}
 }
 
@@ -232,6 +246,7 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				if status == -1 {
 					msg := fmt.Sprintf("%s is updating", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 
 					runScript(server.Update)
 
@@ -243,13 +258,16 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 
 					msg = fmt.Sprintf("%s is updated to %s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				} else {
 					stopProcess(getRunningProcessID(exe))
 					msg := fmt.Sprintf("%s stopped", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 
 					msg = fmt.Sprintf("%s is updating", server.Name)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 
 					runScript(server.Update)
 
@@ -261,10 +279,12 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 
 					msg = fmt.Sprintf("%s is updated to %s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 
 					go runScript(server.Start)
 					msg = fmt.Sprintf("%s started @%s", server.Name, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+					log.Printf("[DEBUG] Response: %s\n", msg)
 				}
 				break
 			}
@@ -272,10 +292,12 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	} else {
 		msg := fmt.Sprintf("? (update <server name>) (update qa1)")
 		rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
+		log.Printf("[DEBUG] Wrong arguments: %s\n", args)
 	}
 }
 
 func loadServers(path string) (servers, error) {
+	log.Printf("[DEBUG] Loading server config from: %s\n", path)
 	var s servers
 	f, err := os.Open(path)
 	if err != nil {
@@ -291,6 +313,7 @@ func loadServers(path string) (servers, error) {
 
 // Returns file version of file with path
 func getFileVersion(path string) (version string, err error) {
+	log.Printf("[DEBUG] Getting file version of: %s\n", path)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		version := "not installed"
 		return version, nil
@@ -316,6 +339,7 @@ func getFileVersion(path string) (version string, err error) {
 
 // Return processes that have Squad in their name
 func getProcesses() []process {
+	log.Printf("[DEBUG] Getting processes\n")
 	back := &backend.Local{}
 
 	shell, err := ps.New(back)
@@ -348,6 +372,7 @@ func getProcesses() []process {
 
 // Stop a process by process ID
 func stopProcess(ID int) {
+	log.Printf("[DEBUG] Stopping process %d\n", ID)
 	back := &backend.Local{}
 
 	shell, err := ps.New(back)
@@ -364,6 +389,7 @@ func stopProcess(ID int) {
 
 // Returns a process ID if process with path is running, otherwise returns -1
 func getRunningProcessID(path string) int {
+	log.Printf("[DEBUG] Getting running process ID of: %s\n", path)
 	processID := -1
 	runningProcesses := getProcesses()
 
@@ -381,6 +407,7 @@ func getRunningProcessID(path string) int {
 
 // Parses full path to Squad exe from start script
 func getExePath(path string) string {
+	log.Printf("[DEBUG] Getting exe path of: %s\n", path)
 	file := getFileContents(path)
 
 	r := regexp.MustCompile(`cd "(.*)"\r\nstart (.*\.exe)`)
@@ -399,6 +426,7 @@ func getExePath(path string) string {
 
 // Return contents in file with path as string
 func getFileContents(path string) string {
+	log.Printf("[DEBUG] Getting file contents of: %s\n", path)
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
@@ -408,6 +436,7 @@ func getFileContents(path string) string {
 
 // Executes a script at path and returns its output when finished
 func runScript(path string) string {
+	log.Printf("[DEBUG] Running script: %s\n", path)
 	cmd := exec.Command("cmd.exe", "/C", path)
 	var out bytes.Buffer
 	cmd.Stdout = &out
