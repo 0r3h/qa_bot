@@ -16,6 +16,8 @@ import (
 
 	ps "github.com/0r3h/go-powershell"
 	"github.com/0r3h/go-powershell/backend"
+
+	a2s "github.com/0r3h/go-a2s"
 )
 
 var (
@@ -30,6 +32,7 @@ type process struct {
 }
 
 type servers struct {
+	IP     string `json:"ip"`
 	Server []struct {
 		Name   string `json:"name"`
 		Start  string `json:"start"`
@@ -114,7 +117,8 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
 				log.Printf("[DEBUG] Response: %s\n", msg)
 			} else {
-				msg := fmt.Sprintf("%s is running @%s", server.Name, version)
+				players := playerStatus(fmt.Sprintf("%s:%s", s.IP, getQueryPort(server.Start)))
+				msg := fmt.Sprintf("%s is running [%s] @%s", server.Name, players, version)
 				rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
 				log.Printf("[DEBUG] Response: %s\n", msg)
 			}
@@ -135,7 +139,8 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
 					log.Printf("[DEBUG] Response: %s\n", msg)
 				} else {
-					msg := fmt.Sprintf("%s is running @%s", server.Name, version)
+					players := playerStatus(fmt.Sprintf("%s:%s", s.IP, getQueryPort(server.Start)))
+					msg := fmt.Sprintf("%s is running [%s] @%s", server.Name, players, version)
 					rtm.SendMessage(rtm.NewOutgoingMessage(msg, ev.Msg.Channel))
 					log.Printf("[DEBUG] Response: %s\n", msg)
 				}
@@ -334,6 +339,8 @@ func getFileVersion(path string) (version string, err error) {
 		return version, err
 	}
 
+	version = strings.TrimSuffix(version, "\r\n")
+
 	return version, err
 }
 
@@ -424,6 +431,19 @@ func getExePath(path string) string {
 	return exePath
 }
 
+// Parses query port from start script
+func getQueryPort(path string) string {
+	log.Printf("[DEBUG] Getting query port of: %s\n", path)
+	file := getFileContents(path)
+
+	r := regexp.MustCompile(`.*QueryPort\=([0-9]*) .*`)
+	parse := r.FindStringSubmatch(file)
+
+	queryPort := parse[1]
+
+	return queryPort
+}
+
 // Return contents in file with path as string
 func getFileContents(path string) string {
 	log.Printf("[DEBUG] Getting file contents of: %s\n", path)
@@ -445,6 +465,26 @@ func runScript(path string) string {
 		log.Fatal(err)
 	}
 	return out.String()
+}
+
+func playerStatus(queryAddress string) string {
+	ac, err := a2s.NewClient(queryAddress)
+	if err != nil {
+		log.Printf("[ERROR] Error opening A2S connection: %s\n", err)
+	}
+	defer ac.Close()
+
+	rules, err := ac.QueryRules()
+	if err != nil {
+		log.Printf("[ERROR] Error querying rules from a2c: %s\n", err)
+	}
+
+	playerCount := rules.Rules["PlayerCount_i"]
+	slotCount := rules.Rules["NUMPUBCONN"]
+
+	players := fmt.Sprintf("%s/%s", playerCount, slotCount)
+
+	return players
 }
 
 func checkMessage(channel string, input string) (forMe bool, output string) {
