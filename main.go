@@ -56,11 +56,12 @@ func main() {
 			botID = fmt.Sprintf("<@%s>", ev.Info.User.ID)
 
 		case *slack.MessageEvent:
+			log.Printf("[INFO] Detected message: %s\n", ev.Msg.Text)
 			forMe, message := checkMessage(ev.Msg.Channel, ev.Msg.Text)
 
 			if forMe {
+				log.Printf("[INFO] Received message: <%s> from <%s>\n", message, ev.Msg.User)
 				parseCommand(rtm, message, ev)
-				log.Printf("[INFO] Received message: %s\n", message)
 			}
 
 		case *slack.RTMError:
