@@ -389,7 +389,7 @@ func stopProcess(ID int) {
 	}
 	defer shell.Exit()
 
-	_, _, err = shell.Execute(fmt.Sprintf("Stop-Process -Id %d", ID))
+	_, _, err = shell.Execute(fmt.Sprintf("Stop-Process -Id %d -Force", ID))
 	if err != nil {
 		log.Fatal(err)
 	}
