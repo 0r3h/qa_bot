@@ -99,7 +99,7 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	s, err := loadServers(configFilePath)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 	}
 
@@ -108,7 +108,7 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 			exe := getExePath(server.Start)
 			version, err := getFileVersion(exe)
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
 				rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 			}
 			status := getRunningProcessID(exe)
@@ -130,7 +130,7 @@ func commandStatus(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				exe := getExePath(server.Start)
 				version, err := getFileVersion(exe)
 				if err != nil {
-					log.Fatal(err)
+					log.Print(err)
 					rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 				}
 				status := getRunningProcessID(exe)
@@ -154,7 +154,7 @@ func commandStart(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	s, err := loadServers(configFilePath)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 	}
 
@@ -170,7 +170,7 @@ func commandStart(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 				}
 				version, err := getFileVersion(exe)
 				if err != nil {
-					log.Fatal(err)
+					log.Print(err)
 					rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 				}
 				status := getRunningProcessID(exe)
@@ -199,7 +199,7 @@ func commandStop(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	s, err := loadServers(configFilePath)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 	}
 
@@ -239,7 +239,7 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 	s, err := loadServers(configFilePath)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 	}
 
@@ -258,7 +258,7 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 
 					version, err := getFileVersion(exe)
 					if err != nil {
-						log.Fatal(err)
+						log.Print(err)
 						rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 					}
 
@@ -279,7 +279,7 @@ func commandUpdate(rtm *slack.RTM, args []string, ev *slack.MessageEvent) {
 
 					version, err := getFileVersion(exe)
 					if err != nil {
-						log.Fatal(err)
+						log.Print(err)
 						rtm.SendMessage(rtm.NewOutgoingMessage(errorMsg, ev.Msg.Channel))
 					}
 
@@ -352,13 +352,13 @@ func getProcesses() []process {
 
 	shell, err := ps.New(back)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	defer shell.Exit()
 
 	stdout, _, err := shell.Execute("Get-Process *Squad* | Select-Object -Property Id, Path | ConvertTo-Csv")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 
 	var processes []process
@@ -385,13 +385,13 @@ func stopProcess(ID int) {
 
 	shell, err := ps.New(back)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	defer shell.Exit()
 
 	_, _, err = shell.Execute(fmt.Sprintf("Stop-Process -Id %d -Force", ID))
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 }
 
@@ -450,7 +450,7 @@ func getFileContents(path string) string {
 	log.Printf("[DEBUG] Getting file contents of: %s\n", path)
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	return string(f)
 }
@@ -463,7 +463,7 @@ func runScript(path string) string {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 	return out.String()
 }
